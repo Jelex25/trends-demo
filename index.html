@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TrendScout — Demo</title>
+<style>
+  :root { --fg:#111; --muted:#6b7280; --line:#e5e7eb; --brand:#4f46e5; }
+  body { margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; color:var(--fg); background:#fafafa; }
+  .wrap { max-width:1100px; margin:0 auto; padding:28px 20px 60px; }
+  h1 { font-size:32px; margin:0 0 8px; }
+  p.lead { color:var(--muted); margin:0 0 24px; }
+  .grid { display:grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap:14px; margin:18px 0 26px; }
+  .kpi { border:1px solid var(--line); border-radius:14px; padding:14px 16px; background:#fff; }
+  .kpi .t { font-size:12px; color:var(--muted); }
+  .kpi .v { font-size:22px; font-weight:700; margin-top:4px; }
+  .card { border:1px solid var(--line); border-radius:16px; background:#fff; padding:16px; }
+  table { border-collapse:collapse; width:100%; }
+  thead th { text-align:left; font-weight:600; border-bottom:1px solid var(--line); padding:10px 10px; background:#f9fafb; font-size:13px; }
+  tbody td { border-top:1px solid var(--line); padding:9px 10px; font-size:13px; }
+  .btns { display:flex; gap:10px; margin-top:16px; }
+  .btn { display:inline-flex; align-items:center; justify-content:center; padding:10px 14px; border-radius:10px; text-decoration:none; font-weight:600; border:1px solid var(--line); background:#fff; }
+  .btn.primary { background:var(--brand); color:#fff; border-color:var(--brand); }
+  .muted { color:var(--muted); font-size:13px; }
+  @media (max-width:900px){ .grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+  @media (max-width:580px){ .grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>TrendScout — AI Product Insights (Demo)</h1>
+  <p class="lead">Mock data demo: OppScore = demand + fragmentation (HHI) + CVR + price posture + CPC + seasonality.</p>
+
+  <div class="grid" id="kpis">
+    <!-- KPIs injected by JS -->
+  </div>
+
+  <div class="card">
+    <strong>Scored Keywords</strong>
+    <div class="muted" style="margin:4px 0 12px;">Seeded with demo values to showcase UX. Replace with SellerSprite/Google Trends later.</div>
+    <div class="table-wrap">
+      <table id="tbl">
+        <thead>
+          <tr>
+            <th>Keyword</th>
+            <th>OppScore</th>
+            <th>Demand</th>
+            <th>CPC</th>
+            <th>HHI</th>
+            <th>Seasonality</th>
+            <th>CVR</th>
+            <th>Price</th>
+          </tr>
+        </thead>
+        <tbody id="tbody">
+          <!-- rows injected by JS -->
+        </tbody>
+      </table>
+    </div>
+    <div class="btns">
+      <a class="btn primary" href="./assets/TrendScout_Spot_Report.pdf" download>Export Spot Report (PDF)</a>
+      <a class="btn" href="#" id="shuffle">Shuffle Mock Data</a>
+    </div>
+  </div>
+
+  <p class="muted" style="margin-top:10px;">
+    Demo only — no external APIs. Later this page will read SellerSprite CSV + Google Trends via backend.
+  </p>
+</div>
+
+<script>
+/* ---------- MOCK DATA (replace later with real JSON) ---------- */
+const mock = {
+  meta:{
+    rows:6,
+    avgOppScore:82.4,
+    fragmentedPct:0.66,
+    lastRefresh: new Date().toISOString()
+  },
+  rows:[
+    {keyword:"glow sticks party",      oppScore:86.7, demand01:0.92, cpc:0.72, hhi:0.28, seasonality01:0.55, cvr:0.14, price:15.99},
+    {keyword:"neon bracelets",         oppScore:83.1, demand01:0.88, cpc:0.61, hhi:0.35, seasonality01:0.60, cvr:0.16, price:12.49},
+    {keyword:"led glow sticks",        oppScore:79.9, demand01:0.71, cpc:0.84, hhi:0.31, seasonality01:0.58, cvr:0.12, price:19.99},
+    {keyword:"bulk glow sticks 100",   oppScore:85.2, demand01:0.90, cpc:0.68, hhi:0.26, seasonality01:0.57, cvr:0.15, price:18.50},
+    {keyword:"glow necklaces",         oppScore:77.3, demand01:0.64, cpc:0.75, hhi:0.42, seasonality01:0.50, cvr:0.10, price:13.49},
+    {keyword:"party supplies glow",    oppScore:82.0, demand01:0.80, cpc:0.59, hhi:0.33, seasonality01:0.62, cvr:0.13, price:16.90},
+  ]
+};
+
+/* ---------- RENDER ---------- */
+function fmtPct(v){ return Math.round(v*100) + "%"; }
+function cell(text){ const td=document.createElement("td"); td.textContent=text; return td; }
+
+function render(){
+  // KPIs
+  document.getElementById("kpis").innerHTML = `
+    <div class="kpi"><div class="t">Rows</div><div class="v">${mock.meta.rows}</div></div>
+    <div class="kpi"><div class="t">Avg OppScore</div><div class="v">${mock.meta.avgOppScore.toFixed(1)}</div></div>
+    <div class="kpi"><div class="t">% Fragmented</div><div class="v">${fmtPct(mock.meta.fragmentedPct)}</div></div>
+    <div class="kpi"><div class="t">Last Refresh</div><div class="v">${new Date(mock.meta.lastRefresh).toLocaleDateString()}</div></div>
+  `;
+
+  // Table
+  const tb = document.getElementById("tbody");
+  tb.innerHTML = "";
+  mock.rows.forEach(r=>{
+    const tr = document.createElement("tr");
+    tr.appendChild(cell(r.keyword));
+    tr.appendChild(cell(r.oppScore.toFixed(1)));
+    tr.appendChild(cell(fmtPct(r.demand01)));
+    tr.appendChild(cell(r.cpc ? "$"+r.cpc.toFixed(2) : "—"));
+    tr.appendChild(cell(r.hhi?.toFixed?.(2) ?? "—"));
+    tr.appendChild(cell(fmtPct(r.seasonality01)));
+    tr.appendChild(cell(fmtPct(r.cvr)));
+    tr.appendChild(cell(r.price ? "$"+r.price.toFixed(2) : "—"));
+    tb.appendChild(tr);
+  });
+}
+
+document.getElementById("shuffle").addEventListener("click",(e)=>{
+  e.preventDefault();
+  // small randomization to show interactivity
+  mock.rows.forEach(r=> r.oppScore = Math.max(60, Math.min(95, r.oppScore + (Math.random()*4-2))));
+  mock.meta.avgOppScore = mock.rows.reduce((a,b)=>a+b.oppScore,0)/mock.rows.length;
+  render();
+});
+
+render();
+</script>
+</body>
+</html>
